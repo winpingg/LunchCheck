@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>午餐任務控制台</title>
+    <link href="https://fonts.googleapis.com/css2?family=Kiwi+Maru:wght@500&display=swap" rel="stylesheet">
+    <style>
+        body, html { 
+            margin: 0; padding: 0; 
+            height: 100vh; width: 100vw;
+            font-family: 'Kiwi Maru', sans-serif; 
+            background-color: #fff9e6; 
+            color: #444; 
+            overflow: hidden; 
+        }
+        
+        .main-container { 
+            display: flex; 
+            height: 100vh; 
+            width: 100vw;
+            box-sizing: border-box;
+            padding: 20px;
+            gap: 20px;
+        }
+        
+        /* 左半邊：任務區 (佔 40%) */
+        .left-panel {
+            flex: 0.4;
+            display: flex;
+            flex-direction: column;
+            background: #ffffff;
+            border-radius: 28px;
+            border: 5px solid #ffcc80; 
+            padding: 20px;
+            box-shadow: 0 8px 25px rgba(255, 183, 77, 0.2);
+        }
+
+        .header-row { 
+            display: flex; justify-content: space-between; align-items: center; 
+            margin-bottom: 12px; 
+            border-bottom: 3px dashed #ffe0b2;
+            padding-bottom: 10px;
+        }
+        h2 { color: #e65100; font-size: 3rem; margin: 0; font-weight: bold; }
+
+        .save-btn { 
+            padding: 8px 16px; background-color: #ffe082; 
+            color: #e65100; border: 3px solid #ffb300; border-radius: 14px; 
+            cursor: pointer; font-size: 1.1rem; font-weight: bold;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+            transition: all 0.2s;
+        }
+        .save-btn:hover { background-color: #ffd54f; transform: scale(1.05); }
+
+        .todo-list { 
+            display: flex; flex-direction: column; 
+            justify-content: space-between; 
+            flex: 1;
+        }
+        
+        /* 任務方塊：字體加大、無預設文字 */
+        .todo-item { 
+            background: #fff8e1; 
+            padding: 5px 15px; border-radius: 18px;
+            border: 3px solid #ffe082; 
+            display: flex; align-items: center; 
+            box-shadow: 0 4px 8px rgba(0,0,0,0.03);
+            font-size: 2.2rem; 
+            font-weight: bold;
+            color: #5d4037;
+            outline: none;
+            height: 12%;
+            overflow: hidden;
+            position: relative;
+        }
+        .todo-item::before { content: '⭐'; margin-right: 15px; font-size: 2rem; flex-shrink: 0; }
+        
+        /* 讓貼進來的圖片自動縮放符合格子大小 */
+        .todo-item img {
+            max-height: 90%;
+            max-width: 85%;
+            object-fit: contain;
+            border-radius: 8px;
+        }
+
+        /* 右半邊：時鐘與時間區 (佔 60%) */
+        .right-panel {
+            flex: 0.6;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            background-color: #e1f5fe; 
+            border-radius: 28px;
+            border: 5px solid #81d4fa; 
+            box-shadow: 0 8px 25px rgba(129, 212, 250, 0.3);
+            padding: 15px;
+        }
+
+        /* 超大指針時鐘 (440px) */
+        .analog-clock {
+            width: 440px;
+            height: 440px;
+            background-color: white;
+            border-radius: 50%;
+            border: 14px solid #0288d1; 
+            position: relative;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+
+        .clock-center {
+            width: 18px;
+            height: 18px;
+            background-color: #ff5722; 
+            border-radius: 50%;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            z-index: 10;
+        }
+
+        .hand {
+            position: absolute;
+            bottom: 50%;
+            left: 50%;
+            transform-origin: bottom;
+            border-radius: 6px;
+        }
+
+        .hour-hand {
+            width: 12px;
+            height: 125px;
+            background-color: #37474f;
+            transform: translateX(-50%) rotate(0deg);
+            z-index: 3;
+        }
+
+        .minute-hand {
+            width: 8px;
+            height: 175px;
+            background-color: #37474f;
+            transform: translateX(-50%) rotate(0deg);
+            z-index: 4;
+        }
+
+        .second-hand {
+            width: 3px;
+            height: 190px;
+            background-color: #ff5252;
+            transform: translateX(-50%) rotate(0deg);
+            z-index: 5;
+        }
+
+        /* 數字靠邊框排列 */
+        .clock-num {
+            position: absolute;
+            font-size: 2.8rem;
+            font-weight: bold;
+            font-family: sans-serif;
+            color: #01579b;
+            width: 55px;
+            height: 55px;
+            text-align: center;
+            line-height: 55px;
+            transform: translate(-50%, -50%);
+            z-index: 2;
+        }
+
+        /* 12小時制超大電子時鐘 */
+        #digital-clock { 
+            font-size: 6.2rem; 
+            font-weight: bold; 
+            color: #01579b; 
+            line-height: 1; 
+            letter-spacing: -2px;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.05);
+        }
+        
+        #date { 
+            font-size: 2.2rem; 
+            color: #0277bd; 
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+
+<div class="main-container">
+    <!-- 左半邊：6項任務 (只留數字編號，可直接貼上圖片或打字) -->
+    <div class="left-panel">
+        <div class="header-row">
+            <h2>✨ 午餐任務</h2>
+            <button class="save-btn" onclick="saveTasks()">💾 儲存修改</button>
+        </div>
+        
+        <div class="todo-list">
+            <div class="todo-item" contenteditable="true">1.</div>
+            <div class="todo-item" contenteditable="true">2.</div>
+            <div class="todo-item" contenteditable="true">3.</div>
+            <div class="todo-item" contenteditable="true">4.</div>
+            <div class="todo-item" contenteditable="true">5.</div>
+            <div class="todo-item" contenteditable="true">6.</div>
+        </div>
+    </div>
+
+    <!-- 右半邊：特大指針時鐘 + 12小時制電子時鐘 -->
+    <div class="right-panel">
+        <div class="analog-clock" id="analog-clock">
+            <div class="clock-center"></div>
+            <div class="hand hour-hand" id="hour-hand"></div>
+            <div class="hand minute-hand" id="minute-hand"></div>
+            <div class="hand second-hand" id="second-hand"></div>
+        </div>
+
+        <div id="digital-clock">00:00</div>
+        <div id="date">0000 年 00 月 00 日</div>
+    </div>
+</div>
+
+<script>
+    // 產生時鐘大數字
+    const clockElement = document.getElementById('analog-clock');
+    const radius = 185; 
+
+    for (let i = 1; i <= 12; i++) {
+        const numDiv = document.createElement('div');
+        numDiv.className = 'clock-num';
+        numDiv.textContent = i;
+        
+        const angle = (i * 30) * (Math.PI / 180);
+        const x = 220 + radius * Math.sin(angle);
+        const y = 220 - radius * Math.cos(angle);
+        
+        numDiv.style.left = `${x}px`;
+        numDiv.style.top = `${y}px`;
+        clockElement.appendChild(numDiv);
+    }
+
+    function updateClock() {
+        const now = new Date();
+        
+        const hours = now.getHours();
+        const minutes = now.getMinutes();
+        const seconds = now.getSeconds();
+
+        const hourDeg = (hours % 12) * 30 + minutes * 0.5;
+        const minuteDeg = minutes * 6 + seconds * 0.1;
+        const secondDeg = seconds * 6;
+
+        document.getElementById('hour-hand').style.transform = `translateX(-50%) rotate(${hourDeg}deg)`;
+        document.getElementById('minute-hand').style.transform = `translateX(-50%) rotate(${minuteDeg}deg)`;
+        document.getElementById('second-hand').style.transform = `translateX(-50%) rotate(${secondDeg}deg)`;
+
+        const timeOptions = { hour12: true, hour: 'numeric', minute: '2-digit' };
+        const dateOptions = { year: 'numeric', month: 'long', day: 'numeric', weekday: 'long' };
+        
+        document.getElementById('digital-clock').textContent = now.toLocaleTimeString('zh-TW', timeOptions);
+        document.getElementById('date').textContent = now.toLocaleDateString('zh-TW', dateOptions);
+    }
+
+    setInterval(updateClock, 1000);
+    updateClock();
+
+    // 儲存任務（完整保留圖片與文字的 HTML 結構）
+    function saveTasks() {
+        const items = document.querySelectorAll('.todo-item');
+        const tasksHTML = Array.from(items).map(item => item.innerHTML);
+        localStorage.setItem('lunchTasksV17', JSON.stringify(tasksHTML));
+        alert('✅ 已完整幫你記住修改後的內容與圖片囉！');
+    }
+
+    // 載入任務
+    function loadTasks() {
+        const saved = localStorage.getItem('lunchTasksV17');
+        if (saved) {
+            const tasksHTML = JSON.parse(saved);
+            const items = document.querySelectorAll('.todo-item');
+            tasksHTML.forEach((html, i) => { if (items[i]) items[i].innerHTML = html; });
+        }
+    }
+    window.onload = loadTasks;
+</script>
+</body>
+</html>
